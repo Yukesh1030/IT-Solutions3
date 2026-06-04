@@ -459,7 +459,7 @@
     function checkAuth() {
       const sessionData = localStorage.getItem('current_user');
       if (!sessionData) {
-        window.location.href = 'Login.html';
+        window.location.href = 'index.html';
         return;
       }
       
@@ -469,7 +469,7 @@
         if (currentUser.type === 'Client') {
           window.location.href = 'ClientDashboard.html';
         } else {
-          window.location.href = 'Login.html';
+          window.location.href = 'index.html';
         }
       }
     }
@@ -927,7 +927,7 @@
       showToast('Logging out safely...', 'warning');
       localStorage.removeItem('current_user');
       setTimeout(() => {
-        window.location.href = 'Login.html';
+        window.location.href = 'index.html';
       }, 1000);
     }
 
