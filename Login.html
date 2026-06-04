@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | IT Solutions</title>
+  <meta name="description" content="Sign in to access your dashboard.">
+  <link rel="stylesheet" href="styles.css">
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <!-- Back to Home Link (Top Left) -->
+  <a href="404.html" class="back-to-home-btn" id="back-to-home">
+    <i data-lucide="home"></i>
+    Back to Home
+  </a>
+
+  <!-- Toast Notifications Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Main Auth Page Wrapper -->
+  <div class="auth-wrapper">
+    <div class="auth-card animate-fade-in">
+      <div class="auth-card-header">
+        <h1 class="auth-card-title gradient-text under-glow">IT Solutions</h1>
+        <p class="auth-card-subtitle">Welcome back! Please enter your details.</p>
+      </div>
+
+      <form id="login-form" onsubmit="handleLogin(event)">
+        <!-- Email Input -->
+        <div class="form-group">
+          <label class="form-label" for="login-email">User ID / Email</label>
+          <div class="input-container">
+            <i data-lucide="mail" class="input-icon"></i>
+            <input 
+              type="email" 
+              id="login-email" 
+              class="form-input" 
+              placeholder="e.g., admin@itsolutions.com" 
+              required
+            >
+          </div>
+        </div>
+
+        <!-- Password Input -->
+        <div class="form-group">
+          <label class="form-label" for="login-password">Password</label>
+          <div class="input-container">
+            <i data-lucide="lock" class="input-icon"></i>
+            <input 
+              type="password" 
+              id="login-password" 
+              class="form-input" 
+              placeholder="••••••••" 
+              required
+            >
+          </div>
+        </div>
+
+        <!-- Login As Dropdown -->
+        <div class="form-group">
+          <label class="form-label" for="login-as">Login As</label>
+          <div class="input-container">
+            <i data-lucide="user-check" class="input-icon"></i>
+            <select id="login-as" class="form-input" required>
+              <option value="" disabled selected>Select Role</option>
+              <option value="Admin">Admin</option>
+              <option value="Client">Client</option>
+            </select>
+            <i data-lucide="chevron-down" class="select-arrow"></i>
+          </div>
+        </div>
+
+        <!-- Remember Me & Forgot Password -->
+        <div class="form-options">
+          <label class="remember-me">
+            <input type="checkbox" id="remember">
+            Remember me
+          </label>
+          <a href="404.html" class="forgot-password" id="forgot-password-link">Forgot password?</a>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn-primary" id="login-button">
+          Sign In
+          <i data-lucide="log-in"></i>
+        </button>
+      </form>
+
+      <!-- Auth Footer Options -->
+      <div class="auth-footer">
+        Don't have an account? 
+        <a href="signup page.html" class="auth-link" id="create-account-link">Create Account</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Default Demo Users for direct testing if localStorage is empty
+    const defaultUsers = [
+      { name: "Alex Admin", email: "admin@itsolutions.com", password: "admin", type: "Admin" },
+      { name: "John Client", email: "client@itsolutions.com", password: "client", type: "Client" }
+    ];
+
+    // Seed database if it does not exist
+    if (!localStorage.getItem('users')) {
+      localStorage.setItem('users', JSON.stringify(defaultUsers));
+    }
+
+    // Function to show Toast Alert
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      
+      let iconName = 'info';
+      if (type === 'success') iconName = 'check-circle';
+      if (type === 'error') iconName = 'alert-circle';
+      if (type === 'warning') iconName = 'alert-triangle';
+
+      toast.innerHTML = `
+        <i data-lucide="${iconName}" class="toast-icon"></i>
+        <span>${message}</span>
+      `;
+      
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      // Trigger animation
+      setTimeout(() => {
+        toast.classList.add('show');
+      }, 50);
+
+      // Remove after 3.5 seconds
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+          toast.remove();
+        }, 400);
+      }, 3500);
+    }
+
+    // Login Handler
+    function handleLogin(event) {
+      event.preventDefault();
+
+      const emailInput = document.getElementById('login-email').value.trim();
+      const passwordInput = document.getElementById('login-password').value;
+      const roleSelect = document.getElementById('login-as').value;
+
+      if (!emailInput || !passwordInput || !roleSelect) {
+        showToast('Please fill out all fields.', 'warning');
+        return;
+      }
+
+      // Fetch users from localStorage
+      const users = JSON.parse(localStorage.getItem('users')) || [];
+
+      // Find matching user
+      const matchedUser = users.find(u => 
+        u.email.toLowerCase() === emailInput.toLowerCase() && 
+        u.password === passwordInput
+      );
+
+      if (!matchedUser) {
+        showToast('Invalid User ID or Password.', 'error');
+        return;
+      }
+
+      // Check if roles match
+      if (matchedUser.type !== roleSelect) {
+        showToast(`This account is registered as a ${matchedUser.type}, not ${roleSelect}.`, 'warning');
+        return;
+      }
+
+      // Successful Auth - Set Session
+      localStorage.setItem('current_user', JSON.stringify({
+        name: matchedUser.name,
+        email: matchedUser.email,
+        type: matchedUser.type
+      }));
+
+      showToast(`Welcome back, ${matchedUser.name}! Logging in...`, 'success');
+
+      // Redirect based on role with a slight delay for toast display
+      setTimeout(() => {
+        if (roleSelect === 'Admin') {
+          window.location.href = 'AdminDashboard.html';
+        } else {
+          window.location.href = 'ClientDashboard.html';
+        }
+      }, 1200);
+    }
+  </script>
+</body>
+</html>

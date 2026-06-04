@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up | IT Solutions</title>
+  <meta name="description" content="Create a new account to get started.">
+  <link rel="stylesheet" href="styles.css">
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <!-- Back to Home Link (Top Left) -->
+  <a href="404.html" class="back-to-home-btn" id="back-to-home">
+    <i data-lucide="home"></i>
+    Back to Home
+  </a>
+
+  <!-- Toast Notifications Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Main Auth Page Wrapper -->
+  <div class="auth-wrapper">
+    <div class="auth-card animate-fade-in">
+      <div class="auth-card-header">
+        <h1 class="auth-card-title gradient-text under-glow">Create Account</h1>
+        <p class="auth-card-subtitle">Get started by entering your details below.</p>
+      </div>
+
+      <form id="signup-form" onsubmit="handleSignup(event)">
+        <!-- Full Name Input -->
+        <div class="form-group">
+          <label class="form-label" for="signup-name">Full Name</label>
+          <div class="input-container">
+            <i data-lucide="user" class="input-icon"></i>
+            <input 
+              type="text" 
+              id="signup-name" 
+              class="form-input" 
+              placeholder="e.g., Alex Johnson" 
+              required
+            >
+          </div>
+        </div>
+
+        <!-- Email Input -->
+        <div class="form-group">
+          <label class="form-label" for="signup-email">Email Address</label>
+          <div class="input-container">
+            <i data-lucide="mail" class="input-icon"></i>
+            <input 
+              type="email" 
+              id="signup-email" 
+              class="form-input" 
+              placeholder="e.g., alex@domain.com" 
+              required
+            >
+          </div>
+        </div>
+
+        <!-- Password Input -->
+        <div class="form-group">
+          <label class="form-label" for="signup-password">Password</label>
+          <div class="input-container">
+            <i data-lucide="lock" class="input-icon"></i>
+            <input 
+              type="password" 
+              id="signup-password" 
+              class="form-input" 
+              placeholder="Min. 6 characters" 
+              minlength="6"
+              required
+            >
+          </div>
+        </div>
+
+        <!-- Account Type Dropdown -->
+        <div class="form-group">
+          <label class="form-label" for="signup-type">Account Type</label>
+          <div class="input-container">
+            <i data-lucide="user-check" class="input-icon"></i>
+            <select id="signup-type" class="form-input" required>
+              <option value="" disabled selected>Select Account Type</option>
+              <option value="Admin">Admin</option>
+              <option value="Client">Client</option>
+            </select>
+            <i data-lucide="chevron-down" class="select-arrow"></i>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn-primary" id="signup-button">
+          Create Account
+          <i data-lucide="user-plus"></i>
+        </button>
+      </form>
+
+      <!-- Auth Footer Options -->
+      <div class="auth-footer">
+        Already have an account? 
+        <a href="Login.html" class="auth-link" id="login-link">Login</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Function to show Toast Alert
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      
+      let iconName = 'info';
+      if (type === 'success') iconName = 'check-circle';
+      if (type === 'error') iconName = 'alert-circle';
+      if (type === 'warning') iconName = 'alert-triangle';
+
+      toast.innerHTML = `
+        <i data-lucide="${iconName}" class="toast-icon"></i>
+        <span>${message}</span>
+      `;
+      
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      // Trigger animation
+      setTimeout(() => {
+        toast.classList.add('show');
+      }, 50);
+
+      // Remove after 3.5 seconds
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+          toast.remove();
+        }, 400);
+      }, 3500);
+    }
+
+    // Signup Handler
+    function handleSignup(event) {
+      event.preventDefault();
+
+      const name = document.getElementById('signup-name').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+      const type = document.getElementById('signup-type').value;
+
+      if (!name || !email || !password || !type) {
+        showToast('Please fill out all fields.', 'warning');
+        return;
+      }
+
+      // Retrieve existing users or empty array
+      const users = JSON.parse(localStorage.getItem('users')) || [];
+
+      // Check if user already exists
+      const userExists = users.some(u => u.email.toLowerCase() === email.toLowerCase());
+
+      if (userExists) {
+        showToast('An account with this email already exists.', 'error');
+        return;
+      }
+
+      // Add new user
+      const newUser = {
+        name,
+        email,
+        password,
+        type
+      };
+
+      users.push(newUser);
+      localStorage.setItem('users', JSON.stringify(users));
+
+      showToast('Account created successfully! Redirecting to Login...', 'success');
+
+      // Redirect to Login.html with a slight delay for toast display
+      setTimeout(() => {
+        window.location.href = 'Login.html';
+      }, 1500);
+    }
+  </script>
+</body>
+</html>
