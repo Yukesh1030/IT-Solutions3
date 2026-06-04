@@ -612,11 +612,11 @@
         const statusBadge = client.status === 'Active' ? 'badge-success' : 'badge-danger';
 
         tr.innerHTML = `
-          <td style="font-weight:600; color:var(--text-primary);">${client.name}</td>
-          <td>${client.email}</td>
-          <td>${client.tech}</td>
-          <td><span class="badge ${statusBadge}">${client.status}</span></td>
-          <td>
+          <td data-label="Company Name" style="font-weight:600; color:var(--text-primary);">${client.name}</td>
+          <td data-label="Email Address">${client.email}</td>
+          <td data-label="Service/Focus">${client.tech}</td>
+          <td data-label="Status"><span class="badge ${statusBadge}">${client.status}</span></td>
+          <td data-label="Actions">
             <button onclick="deleteClient(${index})" style="background:none; border:none; color:var(--danger); cursor:pointer;" title="Delete">
               <i data-lucide="trash-2" style="width:16px; height:16px;"></i>
             </button>
@@ -764,16 +764,16 @@
         tr.style.animationDelay = `${index * 0.05}s`;
 
         tr.innerHTML = `
-          <td>
+          <td data-label="Staff Name">
             <div style="display:flex; align-items:center; gap:10px;">
               <div class="sidebar-avatar" style="width:32px; height:32px; font-size:12px;">${getInitials(emp.name)}</div>
               <span style="font-weight:600; color:var(--text-primary);">${emp.name}</span>
             </div>
           </td>
-          <td>${emp.role}</td>
-          <td><span class="badge badge-primary">${emp.dept}</span></td>
-          <td>${emp.email}</td>
-          <td>
+          <td data-label="Designation">${emp.role}</td>
+          <td data-label="Department"><span class="badge badge-primary">${emp.dept}</span></td>
+          <td data-label="Email">${emp.email}</td>
+          <td data-label="Action">
             <button onclick="deleteEmployee(${index})" style="background:none; border:none; color:var(--danger); cursor:pointer;" title="Offboard Staff">
               <i data-lucide="trash-2" style="width:16px; height:16px;"></i>
             </button>

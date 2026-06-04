@@ -624,10 +624,10 @@
         if (req.status === 'In Progress') badgeClass = 'badge-warning';
 
         tr.innerHTML = `
-          <td style="font-weight:600; color:var(--text-primary);">${req.service}</td>
-          <td>${req.budget}</td>
-          <td>${req.priority}</td>
-          <td><span class="badge ${badgeClass}">${req.status}</span></td>
+          <td data-label="Service Requested" style="font-weight:600; color:var(--text-primary);">${req.service}</td>
+          <td data-label="Est. Budget">${req.budget}</td>
+          <td data-label="Priority">${req.priority}</td>
+          <td data-label="Status"><span class="badge ${badgeClass}">${req.status}</span></td>
         `;
         tbody.appendChild(tr);
       });
@@ -674,12 +674,12 @@
         const statusClass = inv.status === 'Paid' ? 'badge-success' : 'badge-danger';
 
         tr.innerHTML = `
-          <td style="font-weight:600; color:var(--text-primary);">${inv.id}</td>
-          <td>${inv.date}</td>
-          <td>${inv.project}</td>
-          <td style="font-weight:600;">$${inv.amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-          <td><span class="badge ${statusClass}">${inv.status}</span></td>
-          <td>
+          <td data-label="Invoice ID" style="font-weight:600; color:var(--text-primary);">${inv.id}</td>
+          <td data-label="Date Issued">${inv.date}</td>
+          <td data-label="Reference Project">${inv.project}</td>
+          <td data-label="Amount" style="font-weight:600;">$${inv.amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+          <td data-label="Status"><span class="badge ${statusClass}">${inv.status}</span></td>
+          <td data-label="Action">
             <button onclick="openInvoiceDetails('${inv.id}')" class="btn-secondary" style="padding: 6px 12px; font-size:12px; border-radius: var(--radius-sm);">
               View details
             </button>
@@ -703,11 +703,11 @@
         const statusClass = tck.status === 'Open' ? 'badge-warning' : 'badge-success';
 
         tr.innerHTML = `
-          <td style="font-weight:600; color:var(--text-primary);">${tck.id}</td>
-          <td>${tck.title}</td>
-          <td><span class="badge badge-primary">${tck.category}</span></td>
-          <td>${tck.date}</td>
-          <td><span class="badge ${statusClass}">${tck.status}</span></td>
+          <td data-label="Ticket ID" style="font-weight:600; color:var(--text-primary);">${tck.id}</td>
+          <td data-label="Subject / Title">${tck.title}</td>
+          <td data-label="Category"><span class="badge badge-primary">${tck.category}</span></td>
+          <td data-label="Date Filed">${tck.date}</td>
+          <td data-label="Status"><span class="badge ${statusClass}">${tck.status}</span></td>
         `;
         tbody.appendChild(tr);
       });
