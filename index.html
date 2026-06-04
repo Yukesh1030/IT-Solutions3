@@ -82,6 +82,24 @@
           <a href="404.html" class="forgot-password" id="forgot-password-link">Forgot password?</a>
         </div>
 
+        <!-- Quick Demo Credentials Fill -->
+        <div class="quick-fill-container animate-fade-in" style="animation-delay: 0.1s;">
+          <div class="quick-fill-row">
+            <div class="quick-fill-details">
+              <span class="quick-fill-label">Admin Demo:</span>
+              <span class="quick-fill-text">admin@itsolutions.com | admin</span>
+            </div>
+            <button type="button" class="quick-fill-btn" onclick="fillCredentials('admin@itsolutions.com', 'admin', 'Admin')">Fill</button>
+          </div>
+          <div class="quick-fill-row" style="margin-top: 4px; border-top: 1px dashed rgba(37,99,235,0.05); padding-top: 4px;">
+            <div class="quick-fill-details">
+              <span class="quick-fill-label">Client Demo:</span>
+              <span class="quick-fill-text">client@itsolutions.com | client</span>
+            </div>
+            <button type="button" class="quick-fill-btn" onclick="fillCredentials('client@itsolutions.com', 'client', 'Client')">Fill</button>
+          </div>
+        </div>
+
         <!-- Submit Button -->
         <button type="submit" class="btn-primary" id="login-button">
           Sign In
@@ -100,6 +118,14 @@
   <script>
     // Initialize Lucide Icons
     lucide.createIcons();
+
+    // Quick Fill Credentials Helper
+    function fillCredentials(email, password, role) {
+      document.getElementById('login-email').value = email;
+      document.getElementById('login-password').value = password;
+      document.getElementById('login-as').value = role;
+      showToast(`${role} credentials loaded. Ready to Sign In!`, 'success');
+    }
 
     // Default Demo Users for direct testing if localStorage is empty
     const defaultUsers = [
