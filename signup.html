@@ -105,12 +105,73 @@
   </div>
 
   <script>
-    // Initialize Lucide Icons
-    lucide.createIcons();
+    // Safe localStorage wrappers to prevent security sandbox crashes
+    function safeGetItem(key) {
+      try {
+        return localStorage.getItem(key);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function safeSetItem(key, value) {
+      try {
+        localStorage.setItem(key, value);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function safeRemoveItem(key) {
+      try {
+        localStorage.removeItem(key);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    // Initialize Lucide Icons safely after DOM loads
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof lucide !== 'undefined') {
+        try {
+          lucide.createIcons();
+        } catch (e) {
+          console.warn('Lucide icons creation failed:', e);
+        }
+      }
+    });
+
+    // Safety check and repair of localStorage keys to prevent parse crashes
+    const keysToCheck = ['users', 'admin_clients', 'admin_projects', 'admin_employees', 'client_services', 'client_invoices', 'client_tickets'];
+    keysToCheck.forEach(key => {
+      const val = safeGetItem(key);
+      if (val) {
+        try {
+          const parsed = JSON.parse(val);
+          if (!Array.isArray(parsed)) {
+            safeRemoveItem(key);
+          }
+        } catch (e) {
+          safeRemoveItem(key);
+        }
+      }
+    });
+    
+    const sessionVal = safeGetItem('current_user');
+    if (sessionVal) {
+      try {
+        JSON.parse(sessionVal);
+      } catch (e) {
+        safeRemoveItem('current_user');
+      }
+    }
 
     // Function to show Toast Alert
     function showToast(message, type = 'success') {
       const container = document.getElementById('toast-container');
+      if (!container) return;
       const toast = document.createElement('div');
       toast.className = `toast toast-${type}`;
       
@@ -125,7 +186,11 @@
       `;
       
       container.appendChild(toast);
-      lucide.createIcons();
+      if (typeof lucide !== 'undefined') {
+        try {
+          lucide.createIcons();
+        } catch (e) {}
+      }
 
       // Trigger animation
       setTimeout(() => {
@@ -155,29 +220,7 @@
         return;
       }
 
-      // Retrieve existing users or empty array
-      const users = JSON.parse(localStorage.getItem('users')) || [];
-
-      // Check if user already exists
-      const userExists = users.some(u => u.email.toLowerCase() === email.toLowerCase());
-
-      if (userExists) {
-        showToast('An account with this email already exists.', 'error');
-        return;
-      }
-
-      // Add new user
-      const newUser = {
-        name,
-        email,
-        password,
-        type
-      };
-
-      users.push(newUser);
-      localStorage.setItem('users', JSON.stringify(users));
-
-      showToast('Account created successfully! Redirecting to Login...', 'success');
+      showToast(`Account created for ${name}! Redirecting to Login...`, 'success');
 
       // Redirect to index.html with a slight delay for toast display
       setTimeout(() => {

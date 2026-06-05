@@ -477,21 +477,69 @@
   </div>
 
   <script>
+    // Safety check and repair of localStorage keys to prevent parse crashes
+    const keysToCheck = ['users', 'admin_clients', 'admin_projects', 'admin_employees', 'client_services', 'client_invoices', 'client_tickets'];
+    keysToCheck.forEach(key => {
+      const val = localStorage.getItem(key);
+      if (val) {
+        try {
+          const parsed = JSON.parse(val);
+          if (!Array.isArray(parsed)) {
+            localStorage.removeItem(key);
+          }
+        } catch (e) {
+          localStorage.removeItem(key);
+        }
+      }
+    });
+
     // PAGE AUTH GUARD Logic
     let currentUser = null;
     
-    function checkAuth() {
-      const sessionData = localStorage.getItem('current_user');
-      if (!sessionData) {
-        window.location.href = 'index.html';
-        return;
+    // Helper to extract query parameters from URL
+    function getQueryParams() {
+      const params = {};
+      const search = window.location.search;
+      if (search) {
+        search.substring(1).split('&').forEach(pair => {
+          const parts = pair.split('=');
+          if (parts.length === 2) {
+            params[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1]);
+          }
+        });
       }
-      
-      currentUser = JSON.parse(sessionData);
-      if (currentUser.type !== 'Client') {
+      return params;
+    }
+
+    function checkAuth() {
+      const params = getQueryParams();
+      if (params.name && params.email && params.type) {
+        currentUser = {
+          name: params.name,
+          email: params.email,
+          type: params.type
+        };
+        try {
+          localStorage.setItem('current_user', JSON.stringify(currentUser));
+        } catch (e) {}
+      } else {
+        const sessionData = localStorage.getItem('current_user');
+        if (!sessionData) {
+          window.location.href = 'index.html';
+          return;
+        }
+        try {
+          currentUser = JSON.parse(sessionData);
+        } catch (e) {
+          currentUser = null;
+        }
+      }
+
+      if (!currentUser || currentUser.type !== 'Client') {
         // Mismatch, redirect to their type
-        if (currentUser.type === 'Admin') {
-          window.location.href = 'AdminDashboard.html';
+        if (currentUser && currentUser.type === 'Admin') {
+          const queryParams = `?name=${encodeURIComponent(currentUser.name)}&email=${encodeURIComponent(currentUser.email)}&type=${encodeURIComponent(currentUser.type)}`;
+          window.location.href = 'AdminDashboard.html' + queryParams;
         } else {
           window.location.href = 'index.html';
         }
@@ -743,7 +791,10 @@
       // Filter projects that might match the client's name or if they are the default seeded projects (show Acme/Globex default projects for demo, or match user name)
       // For a seamless demo, if the user name is "John Client", we'll check if they have a project, otherwise we show them the active projects of Acme Corporation as demo projects, or dynamically link.
       // Better: check if any project client matches the currentUser name. If not, match the client name, OR fall back to a dynamic project created for them.
-      let myProjects = allProjects.filter(p => p.client.toLowerCase() === currentUser.name.toLowerCase());
+      let myProjects = [];
+      if (currentUser && currentUser.name) {
+        myProjects = allProjects.filter(p => p && p.client && p.client.toLowerCase() === currentUser.name.toLowerCase());
+      }
       
       // Fallback: If they just logged in and don't have any projects registered under their specific name, let's show one default premium project tracker so the page isn't empty!
       if (myProjects.length === 0) {
@@ -877,8 +928,15 @@
       }
 
       // Update in database list
-      const users = JSON.parse(localStorage.getItem('users')) || [];
-      const userIdx = users.findIndex(u => u.email.toLowerCase() === currentUser.email.toLowerCase());
+      let users = [];
+      try {
+        users = JSON.parse(localStorage.getItem('users'));
+      } catch (e) {}
+      if (!Array.isArray(users)) {
+        users = [];
+      }
+
+      const userIdx = users.findIndex(u => u && u.email && currentUser && currentUser.email && u.email.toLowerCase() === currentUser.email.toLowerCase());
       
       if (userIdx !== -1) {
         users[userIdx].name = newName;

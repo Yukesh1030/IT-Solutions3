@@ -35,7 +35,7 @@
           <div class="input-container">
             <i data-lucide="mail" class="input-icon"></i>
             <input 
-              type="email" 
+              type="text" 
               id="login-email" 
               class="form-input" 
               placeholder="e.g., admin@itsolutions.com" 
@@ -82,23 +82,7 @@
           <a href="404.html" class="forgot-password" id="forgot-password-link">Forgot password?</a>
         </div>
 
-        <!-- Quick Demo Credentials Fill -->
-        <div class="quick-fill-container animate-fade-in" style="animation-delay: 0.1s;">
-          <div class="quick-fill-row">
-            <div class="quick-fill-details">
-              <span class="quick-fill-label">Admin Demo:</span>
-              <span class="quick-fill-text">admin@itsolutions.com | admin</span>
-            </div>
-            <button type="button" class="quick-fill-btn" onclick="fillCredentials('admin@itsolutions.com', 'admin', 'Admin')">Fill</button>
-          </div>
-          <div class="quick-fill-row" style="margin-top: 4px; border-top: 1px dashed rgba(37,99,235,0.05); padding-top: 4px;">
-            <div class="quick-fill-details">
-              <span class="quick-fill-label">Client Demo:</span>
-              <span class="quick-fill-text">client@itsolutions.com | client</span>
-            </div>
-            <button type="button" class="quick-fill-btn" onclick="fillCredentials('client@itsolutions.com', 'client', 'Client')">Fill</button>
-          </div>
-        </div>
+
 
         <!-- Submit Button -->
         <button type="submit" class="btn-primary" id="login-button">
@@ -116,15 +100,87 @@
   </div>
 
   <script>
-    // Initialize Lucide Icons
-    lucide.createIcons();
+    // Global error handler to capture and alert any script exceptions
+    window.onerror = function(message, source, lineno, colno, error) {
+      alert("JavaScript Error:\n" + message + "\nLine: " + lineno + "\nSource: " + source);
+      return false;
+    };
 
-    // Quick Fill Credentials Helper
-    function fillCredentials(email, password, role) {
-      document.getElementById('login-email').value = email;
-      document.getElementById('login-password').value = password;
-      document.getElementById('login-as').value = role;
-      showToast(`${role} credentials loaded. Ready to Sign In!`, 'success');
+    // Safe localStorage wrappers to prevent security sandbox crashes
+    function safeGetItem(key) {
+      try {
+        return localStorage.getItem(key);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function safeSetItem(key, value) {
+      try {
+        localStorage.setItem(key, value);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function safeRemoveItem(key) {
+      try {
+        localStorage.removeItem(key);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    // Initialize Lucide Icons safely after DOM loads
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof lucide !== 'undefined') {
+        try {
+          lucide.createIcons();
+        } catch (e) {
+          console.warn('Lucide icons creation failed:', e);
+        }
+      }
+    });
+
+    // Safety check and repair of localStorage keys to prevent parse crashes
+    const keysToCheck = ['users', 'admin_clients', 'admin_projects', 'admin_employees', 'client_services', 'client_invoices', 'client_tickets'];
+    keysToCheck.forEach(key => {
+      const val = safeGetItem(key);
+      if (val) {
+        try {
+          const parsed = JSON.parse(val);
+          if (!Array.isArray(parsed)) {
+            safeRemoveItem(key);
+          }
+        } catch (e) {
+          safeRemoveItem(key);
+        }
+      }
+    });
+    
+    const sessionVal = safeGetItem('current_user');
+    if (sessionVal) {
+      try {
+        JSON.parse(sessionVal);
+      } catch (e) {
+        safeRemoveItem('current_user');
+      }
+    }
+
+    // Helper: Generate a display name from email address safely
+    function getNameFromEmail(email) {
+      if (!email) return "User";
+      const namePart = email.split('@')[0];
+      if (!namePart) return "User";
+      return namePart
+        .split(/[._\-+]/)
+        .map(word => {
+          if (!word) return "";
+          return word.charAt(0).toUpperCase() + word.slice(1);
+        })
+        .join(' ');
     }
 
     // Default Demo Users for direct testing if localStorage is empty
@@ -133,14 +189,22 @@
       { name: "John Client", email: "client@itsolutions.com", password: "client", type: "Client" }
     ];
 
-    // Seed database if it does not exist
-    if (!localStorage.getItem('users')) {
-      localStorage.setItem('users', JSON.stringify(defaultUsers));
+    // Seed database if it does not exist or is not an array
+    let dbUsers = null;
+    try {
+      const val = safeGetItem('users');
+      if (val) {
+        dbUsers = JSON.parse(val);
+      }
+    } catch(e) {}
+    if (!dbUsers || !Array.isArray(dbUsers)) {
+      safeSetItem('users', JSON.stringify(defaultUsers));
     }
 
     // Function to show Toast Alert
     function showToast(message, type = 'success') {
       const container = document.getElementById('toast-container');
+      if (!container) return;
       const toast = document.createElement('div');
       toast.className = `toast toast-${type}`;
       
@@ -155,7 +219,11 @@
       `;
       
       container.appendChild(toast);
-      lucide.createIcons();
+      if (typeof lucide !== 'undefined') {
+        try {
+          lucide.createIcons();
+        } catch (e) {}
+      }
 
       // Trigger animation
       setTimeout(() => {
@@ -179,48 +247,57 @@
       const passwordInput = document.getElementById('login-password').value;
       const roleSelect = document.getElementById('login-as').value;
 
-      if (!emailInput || !passwordInput || !roleSelect) {
+      if (!emailInput || !roleSelect) {
         showToast('Please fill out all fields.', 'warning');
         return;
       }
 
-      // Fetch users from localStorage
-      const users = JSON.parse(localStorage.getItem('users')) || [];
+      // Generate name from email
+      const name = getNameFromEmail(emailInput);
 
-      // Find matching user
-      const matchedUser = users.find(u => 
-        u.email.toLowerCase() === emailInput.toLowerCase() && 
-        u.password === passwordInput
-      );
+      // Save user to session directly (no password/email database checks)
+      const userData = {
+        name: name,
+        email: emailInput,
+        type: roleSelect
+      };
+      
+      safeSetItem('current_user', JSON.stringify(userData));
 
-      if (!matchedUser) {
-        showToast('Invalid User ID or Password.', 'error');
-        return;
-      }
+      // Also ensure this user exists in the local 'users' database array so profile editing works on the dashboards
+      try {
+        let users = [];
+        const val = safeGetItem('users');
+        if (val) {
+          users = JSON.parse(val);
+        }
+        if (!Array.isArray(users)) users = [];
+        let existingUserIdx = users.findIndex(u => u && u.email && u.email.toLowerCase() === emailInput.toLowerCase());
+        if (existingUserIdx === -1) {
+          users.push({
+            name: name,
+            email: emailInput,
+            password: passwordInput,
+            type: roleSelect
+          });
+        } else {
+          users[existingUserIdx].password = passwordInput;
+          users[existingUserIdx].type = roleSelect;
+        }
+        safeSetItem('users', JSON.stringify(users));
+      } catch (e) {}
 
-      // Check if roles match
-      if (matchedUser.type !== roleSelect) {
-        showToast(`This account is registered as a ${matchedUser.type}, not ${roleSelect}.`, 'warning');
-        return;
-      }
-
-      // Successful Auth - Set Session
-      localStorage.setItem('current_user', JSON.stringify({
-        name: matchedUser.name,
-        email: matchedUser.email,
-        type: matchedUser.type
-      }));
-
-      showToast(`Welcome back, ${matchedUser.name}! Logging in...`, 'success');
+      showToast(`Welcome, ${name}! Logging in as ${roleSelect}...`, 'success');
 
       // Redirect based on role with a slight delay for toast display
       setTimeout(() => {
+        const queryParams = `?name=${encodeURIComponent(name)}&email=${encodeURIComponent(emailInput)}&type=${encodeURIComponent(roleSelect)}`;
         if (roleSelect === 'Admin') {
-          window.location.href = 'AdminDashboard.html';
+          window.location.href = 'AdminDashboard.html' + queryParams;
         } else {
-          window.location.href = 'ClientDashboard.html';
+          window.location.href = 'ClientDashboard.html' + queryParams;
         }
-      }, 1200);
+      }, 1000);
     }
   </script>
 </body>
